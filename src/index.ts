@@ -1,7 +1,8 @@
 import puppeteer, { Page, PuppeteerLaunchOptions } from 'puppeteer';
-import fs from "fs";
 
 const ONE_SECOND = 1000;
+const ONE_MINUTE = ONE_SECOND * 60;
+const ONE_HOUR = ONE_MINUTE * 60;
 
 const DEFAULT_OPTIONS: PuppeteerLaunchOptions = {
   headless: true,
@@ -29,16 +30,32 @@ const DEFAULT_OPTIONS: PuppeteerLaunchOptions = {
 
   await page.waitForNetworkIdle();
 
-  const rlbAmount: string = await page.waitForSelector(".css-vft0h7")
-    .then(element => element?.evaluate(x => x.textContent));
+  while (true) {
+    await stakeRLB(page);
 
-  console.log(`You have ${rlbAmount} currently staked`);
-
-  await delay(120 * ONE_SECOND);
-
-  await page.close();
-  await browser.close();
+    // a new lottery happens every 16 hours and 40 minutes, roughly
+    await delay(ONE_HOUR * 16 + ONE_MINUTE * 40);
+  }
 })();
+
+async function stakeRLB(page: Page) {
+  const maxButton = await page.waitForXPath("//button[text()='Max']", { timeout: ONE_HOUR });
+  await maxButton?.click();
+
+  const stakeButton = await page.$x(`//button[contains(text(), 'Set Stake To')]`).then(elements => elements[0]);
+  await stakeButton.click();
+
+  const rollbotMultiplyButton = await page.$x(`//button[contains(text(), 'rollbot')]`).then(elements => elements[0]);
+  await rollbotMultiplyButton.click();
+
+  const applyRollbotMultiplyButton = await page.waitForXPath(`//button[text()='Apply']`);
+  await applyRollbotMultiplyButton?.click();
+
+  const totalStakeAmount: string = await page.waitForSelector(`//div[contains(text(), 'Total stake:')]`)
+    .then(element => element?.evaluate(x => x.parentElement.textContent));
+
+  console.log(totalStakeAmount);
+}
 
 async function launchPuppeteer(options?: PuppeteerLaunchOptions) {
   const browser = await puppeteer.launch(Object.assign({}, DEFAULT_OPTIONS, options));

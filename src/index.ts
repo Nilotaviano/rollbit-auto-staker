@@ -51,7 +51,7 @@ async function stakeRLB(page: Page) {
   const applyRollbotMultiplyButton = await page.waitForXPath(`//button[text()='Apply']`);
   await applyRollbotMultiplyButton?.click();
 
-  const totalStakeAmount: string = await page.waitForSelector(`//div[contains(text(), 'Total stake:')]`)
+  const totalStakeAmount: string = await page.waitForXPath(`//div[contains(text(), 'Total stake:')]`)
     .then(element => element?.evaluate(x => x.parentElement.textContent));
 
   console.log(totalStakeAmount);

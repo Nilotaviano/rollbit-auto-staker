@@ -111,3 +111,6 @@ dist
 
 # Puppeteer session
 user_data/
+
+# env-cmd file
+.env*
